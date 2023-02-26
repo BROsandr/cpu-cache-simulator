@@ -4,32 +4,6 @@ import util
 from cache import Cache
 from memory import Memory
 
-
-def read(address, cache):
-    """Read a byte from cache."""
-    cache_block = cache.read(address)
-
-    if cache_block:
-        global hits
-        hits += 1
-    else:
-        global misses
-        misses += 1
-
-    return cache_block[cache.get_offset(address)]
-
-
-def write(address, byte, cache):
-    """Write a byte to cache."""
-    written = cache.write(address, byte)
-
-    if written:
-        global hits
-        hits += 1
-    else:
-        global misses
-        misses += 1
-
 replacement_policies = ["LRU", "LFU", "FIFO", "RAND"]
 write_policies = ["WB", "WT"]
 
@@ -69,6 +43,39 @@ print("Cache size: " + str(cache_size) +
       " bytes (" + str(cache_size // block_size) + " lines)")
 print("Block size: " + str(block_size) + " bytes")
 print("Mapping policy: " + ("direct" if mapping == 1 else mapping_str) + "\n")
+
+
+def read(address, cache):
+    """Read a byte from cache."""
+    cache_block = cache.read(address)
+
+    if cache_block:
+        global hits
+        hits += 1
+    else:
+        global misses
+        misses += 1
+
+    return cache_block[cache.get_offset(address)]
+
+
+def write(address, byte, cache):
+    """Write a byte to cache."""
+    written = cache.write(address, byte)
+
+    if written:
+        global hits
+        hits += 1
+    else:
+        global misses
+        misses += 1
+    
+    if not written:
+        # Write block to cache
+        block = cache.read(address)
+        if not block:
+            cache.load(address, [0] * block_size)
+        cache.write(address, byte)
 
 command = None
 
@@ -115,17 +122,14 @@ while (command != "quit"):
 
             print("\n" + str(amount) + " bytes written to memory\n")
 
-        elif command == "printcache" and len(params) == 2:
+        elif command == "print" and len(params) == 2:
             start = int(params[0])
             amount = int(params[1])
 
             cache.print_section(start, amount)
 
-        elif command == "printmem" and len(params) == 2:
-            start = int(params[0])
-            amount = int(params[1])
-
-            memory.print_section(start, amount)
+        elif command == "print" and len(params) == 0:
+            cache.print_section(0, len(cache._lines))
 
         elif command == "stats" and len(params) == 0:
             ratio = (hits / ((hits + misses) if misses else 1)) * 100
@@ -138,5 +142,3 @@ while (command != "quit"):
 
     except IndexError:
         print("\nERROR: out of bounds\n")
-    except:
-        print("\nERROR: incorrect syntax\n")

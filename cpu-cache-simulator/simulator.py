@@ -63,24 +63,6 @@ def load(address, data, cache):
     block = [int(byte) for byte in reversed(data.to_bytes(block_size, 'big'))]
     cache.load(address, block)
 
-def write(address, byte, cache):
-    """Write a byte to cache."""
-    written = cache.write(address, byte)
-
-    if written:
-        global hits
-        hits += 1
-    else:
-        global misses
-        misses += 1
-    
-    if not written:
-        # Write block to cache
-        block = cache.read(address)
-        if not block:
-            cache.load(address, [0] * block_size)
-        cache.write(address, byte)
-
 command = None
 
 while (command != "quit"):
@@ -98,15 +80,6 @@ while (command != "quit"):
             print("\nByte 0x" + util.hex_str(byte, 2) + " read from " +
                   util.bin_str(address, args.MEMORY) + "\n")
 
-        elif command == "write" and len(params) == 2:
-            address = int(params[0])
-            byte = int(params[1])
-
-            write(address, byte, cache)
-
-            print("\nByte 0x" + util.hex_str(byte, 2) + " written to " +
-                  util.bin_str(address, args.MEMORY) + "\n")
-            
         elif command == "load" and len(params) == 2:
             address = int(params[0])
             data = int(params[1])

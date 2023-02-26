@@ -59,7 +59,7 @@ class Cache:
 
         return line.data if line else line
 
-    def load(self, address, data):
+    def write(self, address, data):
         """Load a block of memory into the cache.
 
         :param int address: memory address for data to load to cache
@@ -94,34 +94,6 @@ class Cache:
         victim.data = data
 
         return victim_info
-
-    def write(self, address, byte):
-        """Write a byte to cache.
-
-        :param int address: memory address for data to write to cache
-        :param int byte: byte of data to write to cache
-        :return: boolean indicating whether data was written to cache
-        """
-        tag = self._get_tag(address)  # Tag of cache line
-        set = self._get_set(address)  # Set of cache lines
-        line = None
-
-        # Search for cache line within set
-        for candidate in set:
-            if candidate.tag == tag and candidate.valid:
-                line = candidate
-                break
-
-        # Update data of cache line
-        if line:
-            line.data[self.get_offset(address)] = byte
-            line.modified = 1
-
-            if (self._replace_pol == Cache.LRU or
-                self._replace_pol == Cache.LFU):
-                self._update_use(line, set)
-
-        return True if line else False
 
     def print_section(self, start, amount):
         """Print a section of the cache.

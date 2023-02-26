@@ -5,7 +5,7 @@ from cache import Cache
 from memory import Memory
 
 
-def read(address, memory, cache):
+def read(address, cache):
     """Read a byte from cache."""
     cache_block = cache.read(address)
 
@@ -13,21 +13,13 @@ def read(address, memory, cache):
         global hits
         hits += 1
     else:
-        block = memory.get_block(address)
-        victim_info = cache.load(address, block)
-        cache_block = cache.read(address)
-
         global misses
         misses += 1
-
-        # Write victim line's block to memory if replaced
-        if victim_info:
-            memory.set_block(victim_info[0], victim_info[1])
 
     return cache_block[cache.get_offset(address)]
 
 
-def write(address, byte, memory, cache):
+def write(address, byte, cache):
     """Write a byte to cache."""
     written = cache.write(address, byte)
 
@@ -37,19 +29,6 @@ def write(address, byte, memory, cache):
     else:
         global misses
         misses += 1
-
-    if args.WRITE == Cache.WRITE_THROUGH:
-        # Write block to memory
-        block = memory.get_block(address)
-        block[cache.get_offset(address)] = byte
-        memory.set_block(address, block)
-    elif args.WRITE == Cache.WRITE_BACK:
-        if not written:
-            # Write block to cache
-            block = memory.get_block(address)
-            cache.load(address, block)
-            cache.write(address, byte)
-
 
 replacement_policies = ["LRU", "LFU", "FIFO", "RAND"]
 write_policies = ["WB", "WT"]
@@ -103,7 +82,7 @@ while (command != "quit"):
 
         if command == "read" and len(params) == 1:
             address = int(params[0])
-            byte = read(address, memory, cache)
+            byte = read(address, cache)
 
             print("\nByte 0x" + util.hex_str(byte, 2) + " read from " +
                   util.bin_str(address, args.MEMORY) + "\n")
@@ -112,7 +91,7 @@ while (command != "quit"):
             address = int(params[0])
             byte = int(params[1])
 
-            write(address, byte, memory, cache)
+            write(address, byte, cache)
 
             print("\nByte 0x" + util.hex_str(byte, 2) + " written to " +
                   util.bin_str(address, args.MEMORY) + "\n")
@@ -122,7 +101,7 @@ while (command != "quit"):
 
             for i in range(amount):
                 address = random.randint(0, mem_size - 1)
-                read(address, memory, cache)
+                read(address, cache)
 
             print("\n" + str(amount) + " bytes read from memory\n")
 
@@ -132,7 +111,7 @@ while (command != "quit"):
             for i in range(amount):
                 address = random.randint(0, mem_size - 1)
                 byte = util.rand_byte()
-                write(address, byte, memory, cache)
+                write(address, byte, cache)
 
             print("\n" + str(amount) + " bytes written to memory\n")
 

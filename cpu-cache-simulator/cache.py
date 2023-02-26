@@ -81,12 +81,7 @@ class Cache:
                     victim = set[index]
 
             victim.use = 0
-
-            if self._replace_pol == Cache.FIFO:
-                self._update_use(victim, set)
-        elif self._replace_pol == Cache.RAND:
-            index = random.randint(0, self._mapping_pol - 1)
-            victim = set[index]
+            self._update_use(victim, set)
 
         # Store victim info if modified
         if victim.modified:

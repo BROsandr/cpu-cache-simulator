@@ -58,6 +58,10 @@ def read(address, cache):
 
     return cache_block[cache.get_offset(address)]
 
+def load(address, data, cache):
+    """Load a byte to cache."""
+    block = [int(byte) for byte in reversed(data.to_bytes(block_size, 'big'))]
+    cache.load(address, block)
 
 def write(address, byte, cache):
     """Write a byte to cache."""
@@ -101,6 +105,15 @@ while (command != "quit"):
             write(address, byte, cache)
 
             print("\nByte 0x" + util.hex_str(byte, 2) + " written to " +
+                  util.bin_str(address, args.MEMORY) + "\n")
+            
+        elif command == "load" and len(params) == 2:
+            address = int(params[0])
+            data = int(params[1])
+
+            load(address, data, cache)
+
+            print("\nData 0x" + util.hex_str(data, 2) + " written to " +
                   util.bin_str(address, args.MEMORY) + "\n")
 
         elif command == "randread" and len(params) == 1:

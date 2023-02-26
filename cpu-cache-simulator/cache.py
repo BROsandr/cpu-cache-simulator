@@ -8,23 +8,10 @@ class Cache:
 
     """Class representing a processor's main cache."""
 
-    # Replacement policies
-    LRU = "LRU"
-    LFU = "LFU"
-    FIFO = "FIFO"
-    RAND = "RAND"
-
-    # Mapping policies
-    WRITE_BACK = "WB"
-    WRITE_THROUGH = "WT"
-
-    def __init__(self, size, mem_size, block_size, mapping_pol, replace_pol,
-                 write_pol):
+    def __init__(self, size, mem_size, block_size, mapping_pol):
         self._lines = [Line(block_size) for i in range(size // block_size)]
 
         self._mapping_pol = mapping_pol  # Mapping policy
-        self._replace_pol = replace_pol  # Replacement policy
-        self._write_pol = write_pol  # Write policy
 
         self._size = size  # Cache size
         self._mem_size = mem_size  # Memory size
@@ -53,9 +40,7 @@ class Cache:
 
         # Update use bits of cache line
         if line:
-            if (self._replace_pol == Cache.LRU or
-                self._replace_pol == Cache.LFU):
-                self._update_use(line, set)
+            self._update_use(line, set)
 
         return line.data if line else line
 
@@ -68,32 +53,23 @@ class Cache:
         """
         tag = self._get_tag(address)  # Tag of cache line
         set = self._get_set(address)  # Set of cache lines
-        victim_info = None
+        victim = None
 
         # Select the victim
-        if (self._replace_pol == Cache.LRU or
-            self._replace_pol == Cache.LFU or
-            self._replace_pol == Cache.FIFO):
-            victim = set[0]
+        victim = set[0]
 
-            for index in range(len(set)):
-                if set[index].use < victim.use:
-                    victim = set[index]
+        for index in range(len(set)):
+            if set[index].use < victim.use:
+                victim = set[index]
 
-            victim.use = 0
-            self._update_use(victim, set)
-
-        # Store victim info if modified
-        if victim.modified:
-            victim_info = (index, victim.data)
+        victim.use = 0
+        self._update_use(victim, set)
 
         # Replace victim
         victim.modified = 0
         victim.valid = 1
         victim.tag = tag
         victim.data = data
-
-        return victim_info
 
     def print_section(self, start, amount):
         """Print a section of the cache.
@@ -162,14 +138,10 @@ class Cache:
 
         :param line line: cache line to update use bits of
         """
-        if (self._replace_pol == Cache.LRU or
-            self._replace_pol == Cache.FIFO):
-            use = line.use
+        use = line.use
 
-            if line.use < self._mapping_pol:
-                line.use = self._mapping_pol
-                for other in set:
-                    if other is not line and other.use > use:
-                        other.use -= 1
-        elif self._replace_pol == Cache.LFU:
-                line.use += 1
+        if line.use < self._mapping_pol:
+            line.use = self._mapping_pol
+            for other in set:
+                if other is not line and other.use > use:
+                    other.use -= 1

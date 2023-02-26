@@ -34,7 +34,7 @@ misses = 0
 
 memory = Memory(mem_size, block_size)
 cache = Cache(cache_size, mem_size, block_size,
-              mapping, args.REPLACE, args.WRITE)
+              mapping)
 
 mapping_str = "2^{0}-way associative".format(args.MAPPING)
 print("\nMemory size: " + str(mem_size) +
@@ -58,10 +58,10 @@ def read(address, cache):
 
     return cache_block[cache.get_offset(address)]
 
-def load(address, data, cache):
+def write(address, data, cache):
     """Load a byte to cache."""
     block = [int(byte) for byte in reversed(data.to_bytes(block_size, 'big'))]
-    cache.load(address, block)
+    cache.write(address, block)
 
 command = None
 
@@ -80,11 +80,11 @@ while (command != "quit"):
             print("\nByte 0x" + util.hex_str(byte, 2) + " read from " +
                   util.bin_str(address, args.MEMORY) + "\n")
 
-        elif command == "load" and len(params) == 2:
+        elif command == "write" and len(params) == 2:
             address = int(params[0])
             data = int(params[1])
 
-            load(address, data, cache)
+            write(address, data, cache)
 
             print("\nData 0x" + util.hex_str(data, 2) + " written to " +
                   util.bin_str(address, args.MEMORY) + "\n")

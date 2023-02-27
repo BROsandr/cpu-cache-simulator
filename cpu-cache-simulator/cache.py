@@ -17,19 +17,19 @@ class Cache:
 
     """Class representing a processor's main cache."""
 
-    def __init__(self, size, mem_size, block_size, mapping_pol):
-        self._lines = [Line(block_size) for i in range(size // block_size)]
+    def __init__(self, size, mem_size, line_size, mapping_pol):
+        self._lines = [Line(line_size) for i in range(size // line_size)]
 
         self._mapping_pol = mapping_pol  # Mapping policy
 
         self._size = size  # Cache size
         self._mem_size = mem_size  # Memory size
-        self._block_size = block_size  # Block size
+        self._line_size = line_size  # Block size
 
         # Bit offset of cache line tag
         self._tag_shift = int(log(self._size // self._mapping_pol, 2))
         # Bit offset of cache line set
-        self._set_shift = int(log(self._block_size, 2))
+        self._set_shift = int(log(self._line_size, 2))
 
     def read(self, address):
         """Read a block of memory from the cache.
@@ -86,12 +86,12 @@ class Cache:
         :param int start: start address to print from
         :param int amount: amount of lines to print
         """
-        line_len = len(str(self._size // self._block_size - 1))
+        line_len = len(str(self._size // self._line_size - 1))
         use_len = max([len(str(i.use)) for i in self._lines])
         tag_len = int(log(self._mapping_pol * self._mem_size // self._size, 2))
         address_len = int(log(self._mem_size, 2))
 
-        if start < 0 or (start + amount) > (self._size // self._block_size):
+        if start < 0 or (start + amount) > (self._size // self._line_size):
             raise IndexError
 
         print("\n" + " " * line_len + " " * use_len + " U M V T" +
@@ -123,7 +123,7 @@ class Cache:
 
         :param int address: memory address to get offset from
         """
-        return address & (self._block_size - 1)
+        return address & (self._line_size - 1)
 
     def _get_tag(self, address):
         """Get the cache line tag from a physical address.
@@ -137,7 +137,7 @@ class Cache:
 
         :param int address: memory address to get set from
         """
-        set_mask = (self._size // (self._block_size * self._mapping_pol)) - 1
+        set_mask = (self._size // (self._line_size * self._mapping_pol)) - 1
         set_num = (address >> self._set_shift) & set_mask
         index = set_num * self._mapping_pol
         return self._lines[index:index + self._mapping_pol]

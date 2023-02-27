@@ -17,17 +17,17 @@ class Cache:
 
     """Class representing a processor's main cache."""
 
-    def __init__(self, size, mem_size, line_size, mapping_pol):
+    def __init__(self, size, mem_size, line_size, way_number):
         self._lines = [Line(line_size) for i in range(size // line_size)]
 
-        self._mapping_pol = mapping_pol  # Mapping policy
+        self._way_number = way_number  # Mapping policy
 
         self._size = size  # Cache size
         self._mem_size = mem_size  # Memory size
         self._line_size = line_size  # Block size
 
         # Bit offset of cache line tag
-        self._tag_shift = int(log(self._size // self._mapping_pol, 2))
+        self._tag_shift = int(log(self._size // self._way_number, 2))
         # Bit offset of cache line set
         self._set_shift = int(log(self._line_size, 2))
 
@@ -88,7 +88,7 @@ class Cache:
         """
         line_len = len(str(self._size // self._line_size - 1))
         use_len = max([len(str(i.use)) for i in self._lines])
-        tag_len = int(log(self._mapping_pol * self._mem_size // self._size, 2))
+        tag_len = int(log(self._way_number * self._mem_size // self._size, 2))
         address_len = int(log(self._mem_size, 2))
 
         if start < 0 or (start + amount) > (self._size // self._line_size):
@@ -113,7 +113,7 @@ class Cache:
         :param int index: index of cache line to get physical address of
         :return: physical address of cache line
         """
-        set_num = index // self._mapping_pol
+        set_num = index // self._way_number
 
         return ((self._lines[index].tag << self._tag_shift) +
                 (set_num << self._set_shift))
@@ -137,10 +137,10 @@ class Cache:
 
         :param int address: memory address to get set from
         """
-        set_mask = (self._size // (self._line_size * self._mapping_pol)) - 1
+        set_mask = (self._size // (self._line_size * self._way_number)) - 1
         set_num = (address >> self._set_shift) & set_mask
-        index = set_num * self._mapping_pol
-        return self._lines[index:index + self._mapping_pol]
+        index = set_num * self._way_number
+        return self._lines[index:index + self._way_number]
 
     def _update_use(self, line, set):
         """Update the use bits of a cache line.
@@ -149,8 +149,8 @@ class Cache:
         """
         use = line.use
 
-        if line.use < self._mapping_pol:
-            line.use = self._mapping_pol
+        if line.use < self._way_number:
+            line.use = self._way_number
             for other in set:
                 if other is not line and other.use > use:
                     other.use -= 1
